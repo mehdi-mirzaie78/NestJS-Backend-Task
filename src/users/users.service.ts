@@ -24,13 +24,9 @@ export class UsersService {
     // const userExists = await this.userModel.findOne({ email: userDto.email });
     // if (userExists) throw new HttpException('User already exists', 400);
 
-    const createdUser = new this.userModel(userDto);
-    await createdUser.save();
-
-    this.client.emit(
-      'user_messages',
-      this.transformUserResponse(createdUser.toObject()),
-    );
+    const createdUser = await this.userModel.create(userDto);
+    
+    this.client.emit('user_messages', this.transformUserResponse(createdUser));
 
     this.client.emit('send_email', {
       email: createdUser.email,
@@ -38,7 +34,7 @@ export class UsersService {
       message: 'Welcome to our platform!',
     });
 
-    return this.transformUserResponse(createdUser.toObject());
+    return this.transformUserResponse(createdUser);
   }
 
   async getUserById(userId: number): Promise<User> {
@@ -56,7 +52,7 @@ export class UsersService {
   }
 
   async getUserAvatar(userId: number): Promise<string> {
-    const avatarEntry = await this.avatarModel.findOne({ userId });
+    const avatarEntry = await this.avatarModel.findOne({ userId: userId });
 
     if (avatarEntry) {
       const filePath = path.resolve(
@@ -78,8 +74,7 @@ export class UsersService {
 
     fs.writeFileSync(filePath, buffer);
 
-    const avatar = new this.avatarModel({ userId, hash, filePath });
-    await avatar.save();
+    await this.avatarModel.create({ userId, hash, filePath });
 
     return buffer.toString('base64');
   }
