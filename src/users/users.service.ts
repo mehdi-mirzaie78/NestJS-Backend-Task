@@ -21,11 +21,11 @@ export class UsersService {
 
   async createUser(userDto: any): Promise<User> {
     // I wrote this part because I didn't want to store one user multiple times
-    // const userExists = await this.userModel.findOne({ email: userDto.email });
-    // if (userExists) throw new HttpException('User already exists', 400);
+    const userExists = await this.userModel.findOne({ email: userDto.email });
+    if (userExists) throw new HttpException('User already exists', 400);
 
-    const createdUser = await this.userModel.create(userDto);
-    
+    const createdUser = (await this.userModel.create(userDto)).toObject();
+
     this.client.emit('user_messages', this.transformUserResponse(createdUser));
 
     this.client.emit('send_email', {

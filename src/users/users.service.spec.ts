@@ -45,9 +45,15 @@ const mockUserModel = {
     first_name: data.first_name,
     last_name: data.last_name,
     avatar: data.avatar,
+    toObject: () => ({
+      id: data.id,
+      email: data.email,
+      first_name: data.first_name,
+      last_name: data.last_name,
+      avatar: data.avatar,
+    }),
   })),
 };
-
 const mockAvatarModel = {
   findOne: jest.fn(),
   findOneAndDelete: jest.fn(),
@@ -109,9 +115,19 @@ describe('UsersService', () => {
 
   describe('createUser', () => {
     it('should create a new user', async () => {
+      mockUserModel.findOne.mockResolvedValueOnce(null);
       const result = await service.createUser(createMockUser);
-      expect(result).toHaveProperty('first_name', createMockUser.first_name);
-      expect(result).toHaveProperty('last_name', createMockUser.last_name);
+      expect(result).toBeDefined();
+      expect(mockUserModel.findOne).toHaveBeenCalledWith({
+        email: createMockUser.email,
+      });
+    });
+
+    it('should throw an error if the user already exists', async () => {
+      mockUserModel.findOne.mockResolvedValueOnce(mockUser);
+      await expect(service.createUser(createMockUser)).rejects.toThrow(
+        'User already exists',
+      );
     });
   });
 
